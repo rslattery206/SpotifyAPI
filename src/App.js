@@ -6,28 +6,31 @@ import './App.css';
 const safeJsonStringify = require("safe-json-stringify")
 const queryString = require('query-string')
 const darkSideOfTheMoon = '4LH4d3cOWNNsVw41Gqt2kv'
-const token_url = 'https://accounts.spotify.com/api/token'
-const client_id = 'f820c80b31f2494bbaaebf7317c588b5'
-const client_secret = 'eb338e5aa5aa43c9a7aac93bd7c638fc'
 const redirect_uri = 'http://localhost:3000/'
+// f820c80b31f2494bbaaebf7317c588b5
 
 
-const authorize_url = 'https://accounts.spotify.com/authorize?' + 
-queryString.stringify({
-  response_type: 'token',
-  client_id: client_id,
-  redirect_uri: redirect_uri,
-})
 
-function getAccessToken() {
+
+
+function parseAccessToken() {
   const location = window.location.href
   const query = location.slice(location.indexOf("#"))
   if (query.length > 0) {
-    console.log("query was found")
     let params = queryString.parse(query)
     return params.access_token
   }
   return null
+}
+
+function getAccessToken(id) {
+  const authorize_url = 'https://accounts.spotify.com/authorize?' + 
+  queryString.stringify({
+    response_type: 'token',
+    client_id: id,
+    redirect_uri: redirect_uri,
+  })
+  window.location = authorize_url
 }
 
 async function getAlbumTracks(id, token) {
@@ -51,20 +54,29 @@ async function getAlbumTracks(id, token) {
 
 
 function App() {
-  const [error, setError] = useState(null);
-  const [items, setItems] = useState();
+  const [client_id, setClient_id] = useState('');
+  const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    
-  })
+  const handleClientIdInput = event => {
+    setClient_id(event.target.value);
+    console.log("changed to " + event.target.value);
+  }
+
 
   return (
     <div style={{color: 'blueviolet'}}>
-      Hello<br/>
-      <a href = {authorize_url}> Authorize Spotify </a>
+      <h1>Welcome to the Spotify API Caller</h1><br/>
+      <p>Enter Client ID and Authorize Spotify before calling APIs:</p>
+      <input 
+        type="text"
+        id="client_id"
+        onChange={handleClientIdInput} 
+        value={client_id}/>
+      <button onClick={() => getAccessToken(client_id)}> Authorize Spotify </button>
       <br/>
-      <button onClick={() => console.log(getAccessToken())}> Get Access Token </button>
-      <button onClick={() => (getAlbumTracks(darkSideOfTheMoon, getAccessToken()))}> Get Album Tracks </button>
+      <button onClick={() => setMessage(parseAccessToken())}> Get Access Token </button>
+      <button onClick={() => (getAlbumTracks(darkSideOfTheMoon, parseAccessToken()))}> Get Album Tracks </button>
+      <p>{message}</p>
     </div>
   );
 }
