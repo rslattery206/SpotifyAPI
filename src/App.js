@@ -1,26 +1,17 @@
 import { useEffect } from 'react';
 import { useState } from 'react';
-import { Buffer } from 'buffer';
-import axios from 'axios';
 import './App.css';
 const safeJsonStringify = require("safe-json-stringify")
 const queryString = require('query-string')
 const darkSideOfTheMoon = '4LH4d3cOWNNsVw41Gqt2kv'
+const ratm = '4Io5vWtmV1rFj4yirKb4y4'
 const redirect_uri = 'http://localhost:3000/'
 // f820c80b31f2494bbaaebf7317c588b5
 
-
-
-
-
-function parseAccessToken() {
+function checkForQueries() {
   const location = window.location.href
-  const query = location.slice(location.indexOf("#"))
-  if (query.length > 0) {
-    let params = queryString.parse(query)
-    return params.access_token
-  }
-  return null
+  const queries = location.slice(location.indexOf("#"))
+  return queries
 }
 
 function getAccessToken(id) {
@@ -30,7 +21,7 @@ function getAccessToken(id) {
     client_id: id,
     redirect_uri: redirect_uri,
   })
-  window.location = authorize_url
+  window.location.href = authorize_url // Takes user to spotify service page
 }
 
 async function getAlbumTracks(id, token) {
@@ -56,11 +47,20 @@ async function getAlbumTracks(id, token) {
 function App() {
   const [client_id, setClient_id] = useState('');
   const [message, setMessage] = useState('');
+  const [authorized, setAuthorized] = useState(false)
 
   const handleClientIdInput = event => {
     setClient_id(event.target.value);
-    console.log("changed to " + event.target.value);
   }
+
+  useEffect(() => {
+    let params = queryString.parse(checkForQueries())
+    if (params.access_token != undefined) {
+      localStorage.setItem('token', params.access_token)
+      setAuthorized(true)
+      window.history.pushState("", "", redirect_uri)
+    }
+  });
 
 
   return (
@@ -74,8 +74,7 @@ function App() {
         value={client_id}/>
       <button onClick={() => getAccessToken(client_id)}> Authorize Spotify </button>
       <br/>
-      <button onClick={() => setMessage(parseAccessToken())}> Get Access Token </button>
-      <button onClick={() => (getAlbumTracks(darkSideOfTheMoon, parseAccessToken()))}> Get Album Tracks </button>
+      <button onClick={() => (getAlbumTracks(ratm, localStorage.getItem('token')))}> Get Album Tracks </button>
       <p>{message}</p>
     </div>
   );
